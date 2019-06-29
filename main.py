@@ -2,7 +2,7 @@ from PIL import Image
 from collections import deque
 import numpy as np
 from multiprocessing import Pool, cpu_count
-from _fc.lib import fc, bailout
+from _fc.lib import fc
 
 def in_mandelbrot_set(xy, c, iterations):
     z = 0

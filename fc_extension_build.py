@@ -1,7 +1,6 @@
 from cffi import FFI
 ffibuilder = FFI()
-ffibuilder.cdef("""double * fc(double zr, double zi, double cr, double ci);
-                int bailout(double zr, double zi, double radius);""")
+ffibuilder.cdef("""double * fc(double zr, double zi, double cr, double ci);""")
 
 ffibuilder.set_source("_fc",
     """ 

@@ -1,5 +1,5 @@
 # FractalRenderer-PyCFFI
-A toy Mandelbrot set fractal renderer utilizing multiple threads and CFFI math routines.
+A toy Mandelbrot set fractal renderer utilizing a multithreaded Escape Time algorithm and CFFI math routines.
 
 # Requirements
 Requires Python 3+, PIL, numpy, CFFI

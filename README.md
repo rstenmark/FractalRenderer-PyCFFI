@@ -8,7 +8,9 @@ You can acquire these modules via pip. Refer to CFFI documentation for installat
 
 # Instructions
 With all requirements installed, run fc_extension_build.py to compile the CFFI extension.
+
 Configure image parameters in main.py via the max_iterations and subdiv variables.
+
 Run main.py. An image named "mandelbrot.png" will be written to the current working directory.
 
 # Example

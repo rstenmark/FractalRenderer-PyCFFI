@@ -1,6 +1,6 @@
 from cffi import FFI
 ffibuilder = FFI()
-ffibuilder.cdef("""double * fc(double zr, double zi, double cr, double ci);""")
+ffibuilder.cdef("""int * is_in_mbset(double zr, double zi, double cr, double ci, int iterations, double radius);""")
 
 ffibuilder.set_source("_fc",
     """ 

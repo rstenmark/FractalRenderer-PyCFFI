@@ -2,12 +2,11 @@ from PIL import Image
 from collections import deque
 import numpy as np
 from multiprocessing import Pool, cpu_count
-from _fc.lib import fc
+from _fc.lib import is_in_mbset
 
 def in_mandelbrot_set(xy, c, iterations):
     z = 0
     radius = 2
-    max_periodicity = 10
 
     c_range = ((-2, 1), (-1.5, 1.5))
 
@@ -16,13 +15,8 @@ def in_mandelbrot_set(xy, c, iterations):
                 c_range[1][0] + (c.imag / xy[1]) * (c_range[1][1] + abs(c_range[1][0])))
     #c *= 1.0
 
-    for i in range(0, iterations):
-        z = fc(z.real, z.imag, c.real, c.imag)
-        z = complex(z[0], z[1])
-        if abs(z) > radius:
-            return (False, i)
-
-    return (True, iterations)
+    result = is_in_mbset(z.real, z.imag, c.real, c.imag, iterations, radius)
+    return (result[0], result[1])
 
 
 def full_set_parallel(field, subdiv, max_iterations):

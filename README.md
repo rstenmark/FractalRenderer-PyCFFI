@@ -17,4 +17,4 @@ Run main.py. An image named "mandelbrot.png" will be written to the current work
 
 ![mandelbrot](https://i.imgur.com/28sX6GQ.png)
 
-2048x2048 with up to 64 iterations per pixel, rendered in 53.4 seconds on 4 threads on a AMD Phenom II x4 960T @ 3.8 GHz.
+2048x2048 with up to 64 iterations per pixel, rendered in 38.5 seconds on 4 threads on an Intel i5-6300U @ 2.40GHz.

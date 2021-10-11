@@ -1,1 +1,1 @@
-int * is_in_mbset(double zr, double zi, double cr, double ci, int iterations, double radius);
+int * mandelbrot(int x1, int y1, int x2, int y2, int x_slice, int x_max, int y_max, int iterations, double radius);

@@ -1,90 +1,67 @@
+#!/usr/bin/python3
+
+import multiprocessing as mp
+import math
 from PIL import Image
-from collections import deque
-import numpy as np
-from multiprocessing import Pool, cpu_count
-from _fc.lib import is_in_mbset
+from _fc.lib import mandelbrot
 
-def in_mandelbrot_set(xy, c, iterations):
-    z = 0
-    radius = 2
+def f(args: tuple):
+    print(*args)
+    a = mandelbrot(*args)
+    return [a[i] for i in range(0, (args[4] * args[3]))]
 
-    c_range = ((-2, 1), (-1.5, 1.5))
+def main() -> None:
+    # number of host CPUs
+    cpus = mp.cpu_count()
 
-    # Transform c to (-2.5, 1) + (-1, 1)i
-    c = complex(c_range[0][0] + (c.real / xy[0]) * (c_range[0][1] + abs(c_range[0][0])),
-                c_range[1][0] + (c.imag / xy[1]) * (c_range[1][1] + abs(c_range[1][0])))
-    #c *= 1.0
+    # image resolution
+    resolution = (6**5, 6**5)
 
-    result = is_in_mbset(z.real, z.imag, c.real, c.imag, iterations, radius)
-    return (result[0], result[1])
+    # escape-time iterations per pixel
+    iterations = 256
 
+    # use unsigned 16-bit pixels
+    image_mode = 'I;16'
 
-def full_set_parallel(field, subdiv, max_iterations):
-    # Parallel implementation
-    args = []
-    for j in range(0, subdiv):
-        for i in range(0, subdiv):
-            args.append( ((subdiv, subdiv), complex(j, i), max_iterations) )
-    print("done building arguments")
+    # brightness factor
+    # multiply result pixel values by this value to maximize dynamic range
+    # with PIL.Image in 'I;16' mode (16 bits per pixel, BW)
+    brightness_factor = round(2**16 / iterations)
 
-    p = Pool(cpu_count())
-    r = list(p.starmap(in_mandelbrot_set, args))
+    # escape radius
+    radius = 2.0
 
-    for j in range(0, subdiv):
-        for i in range(0, subdiv):
-            ind = (subdiv*j) + i
-            if r[ind][0]:
-                field[j][i] = 0 * r[ind][1]/max_iterations
-            else:
-                field[j][i] = 255 * r[ind][1]/max_iterations
+    # rectangular chunk size allocated to each core
+    chunksize = (int(resolution[0]/cpus), resolution[1])
 
-def lbl_parallel(field, subdiv, max_iterations):
-    # Line-by-line Parallel implementation
-    args = []
-    p = Pool(cpu_count())
-    for j in range(0, subdiv):
-        for i in range(0, subdiv):
-            args.append( ((subdiv, subdiv), complex(j, i), max_iterations) )
+    # Build list of 9-tuples containing arguments to pass to mandelbrot func
+    jobs = list()
+    for i in range(0, cpus):
+        jobs.append(
+            (i * chunksize[0], 
+            0, 
+            (i+1)*chunksize[0], 
+            chunksize[1],
+            chunksize[0],
+            resolution[0],
+            resolution[1],
+            iterations,
+            radius)
+        )
 
-        r = list(p.starmap(in_mandelbrot_set, args))
+    # Map func over jobs
+    with mp.Pool(cpus) as p:
+        r = p.map(f, jobs)
 
-        for i in range(0, subdiv):
-            if r[i][0]:
-                field[j][i] = 0
-            else:
-                field[j][i] = 255 * r[i][1]/max_iterations
-
-        args = []
-
-def serial(field, subdiv, max_iterations):
-    # Serial implementation
-    with np.nditer(field, flags=['multi_index']) as it:
-        
-        while not it.finished:
-            i, j = it.multi_index[0], it.multi_index[1]
-            c = complex(j, i)
-            r = in_mandelbrot_set((subdiv, subdiv), c, iterations=max_iterations) 
-            if r[0]:
-                field[j][i] = 0 * r[1]/max_iterations
-            else:
-                field[j][i] = 255 * r[1]/max_iterations
-            it.iternext()
-
-if __name__ == '__main__':
-    max_iterations = 64
-    subdiv = 2048
-    field = np.zeros((subdiv, subdiv), dtype=int)
-
-    print(subdiv, "x", subdiv, ", maximum iterations: ", max_iterations, sep='')
-    lbl_parallel(field, subdiv, max_iterations)
-
-
-    im = Image.new('RGB', (subdiv, subdiv))
-    for j in range(0, len(field)):
-        for i in range(0, len(field[0])):
-            r = int(field[j][i])
-            g = int(field[j][i]/2)
-            b = int(field[j][i]/4)
-            im.putpixel((j, i), (r, g, b))
+    im = Image.new(image_mode, resolution)
+    # For each result list
+    for l, offset in zip(r, range(0, cpus)):
+        # For each pixel in result list
+        for i in range(0, chunksize[0] * chunksize[1]):
+            xy = ((i % chunksize[0]) + chunksize[0]*offset, math.floor(i / chunksize[0]))
+            im.putpixel(xy, brightness_factor * l[i])
 
     im.save("mandelbrot.png")
+
+if __name__ == '__main__':
+    main()

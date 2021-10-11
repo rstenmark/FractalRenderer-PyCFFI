@@ -1,12 +1,13 @@
+#!/usr/bin/python3
+
 from cffi import FFI
 ffibuilder = FFI()
-ffibuilder.cdef("""int * is_in_mbset(double zr, double zi, double cr, double ci, int iterations, double radius);""")
+ffibuilder.cdef("""int * mandelbrot(int x1, int y1, int x2, int y2, int x_slice, int x_max, int y_max, int iterations, double radius);""")
 
 ffibuilder.set_source("_fc",
     """ 
-        #include "fc.h"',
+    #include "fc.h"
     """,
     sources=["fc.c"])
 
-if __name__ == "__main__":
-    ffibuilder.compile(verbose=True)
+ffibuilder.compile(verbose=True)
